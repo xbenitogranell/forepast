@@ -13,6 +13,14 @@ library(mapview)
 library(raster)
 library(rnaturalearth)
 
+# World data countries
+library(maps)
+library(rworldmap)
+world <- map_data("world")
+
+world_sf <- st_as_sf(world, coords = c("long", "lat"), 
+                     crs = 4326, agr = "constant")
+
 # Read in the database entries
 entries <- read.csv("FOREPAST Knowledge Database - FOREPAST_DB_v2.csv", sep=",") %>%
   filter(!is.na(latitude)) # drop non-local entries
@@ -83,33 +91,20 @@ subrealms_clip <- entries.clip %>%
 subrealms_clip$count <- lengths(st_intersects(subrealms_clip, entries_sf))
 mapview(subrealms_clip)
 
-
 #check
 st_is_valid(subrealms_clip)
 
 theme_set(theme_bw())
 
-ggplot() +
+#plot
+plt1 <- ggplot() +
   geom_sf(data=subrealms_clip, aes(fill=count))+
   scale_fill_viridis_c(option = "magma", "") +
-  geom_sf(data=entries_sf, aes(), colour="grey") +
+  geom_sf(data=entries_sf, aes(), colour="grey", shape=17, size=3) +
+  geom_sf(data=world_sf, aes(), size=0.5) + #plot world map
   theme(legend.position = "bottom") +
   coord_sf(xlim = c(-130, 160), ylim = c(-30, 30)) 
+plt1
 
-
-
-
-
-
-# World data countries
-library(maps)
-library(rworldmap)
-world <- map_data("world")
-
-world_sf <- st_as_sf(world, coords = c("long", "lat"), 
-                       crs = 4326, agr = "constant")
-
-# crop bioregions with countries shapefile
-output <- crop(x, y) 
 
 
