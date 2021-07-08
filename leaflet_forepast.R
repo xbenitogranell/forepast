@@ -1,3 +1,10 @@
+#---------------------------------------------------------------------------------------
+# FOREPAST project
+# Authors: Koch, A., Wheeler, C., Benito, X.
+# contact e-mail: xavier.benito.granell@gmail.com
+#---------------------------------------------------------------------------------------
+
+# Load libraries for functions used
 library(leaflet)
 library(sf)
 library(tidyverse)
@@ -6,10 +13,8 @@ library(mapview)
 library(raster)
 library(rnaturalearth)
 
-
-entries <- read.csv("FOREPAST Knowledge Database - FOREPAST_DB.csv", sep=",") %>%
-  # rename(latitude = lat,
-  #        longitude = lon) %>%
+# Read in the database entries
+entries <- read.csv("FOREPAST Knowledge Database - FOREPAST_DB_v2.csv", sep=",") %>%
   filter(!is.na(latitude)) # drop non-local entries
 
 #convert to spatial object
@@ -32,33 +37,73 @@ leaflet() %>%
 bioregions <- sf::st_read("OE_Bioregions/OE_Bioregions.shp")
 mapview(bioregions)
 
+# simple plot of Bioregions map
 ggplot() +
   geom_sf(data = bioregions, aes(fill = BIOREGIO_1)) +
   theme(legend.position = "none") +
   geom_sf(data=entries_sf) +
   coord_sf(xlim = c(-160, 160), ylim = c(-30, 30)) 
 
-# Overlay bioregions where locations are 
 # check 
 st_is_valid(bioregions)
 
 # Overlay bioregions where locations are 
-bioregions$count <- lengths(st_intersects(bioregions, entries_sf))
-st_is_valid(bioregions)
+entries.clip <- bioregions[entries_sf, ]
+
+# create new variables that recode Bioregions to subrealms
+subrealms_clip <- entries.clip %>%
+  mutate(subrealm = recode(BIOREGION_, "NT11" = "Andes & Pacific Coast",
+                           "NT24" = "Central America",
+                           "NT5" ="Andes & Pacific Coast",
+                           "NT18" = "Amazonia",
+                           "NT17" = "Amazonia",
+                           "NT19" = "Amazonia",
+                           "NT20" = "Amazonia",
+                           "NT12" = "Brazil Cerrado & Atlantic Coast",
+                           "AU9" = "Australia",
+                           "AU13" = "Australasian Islands & Eastern Indonesia",
+                           "AU14" = "Australasian Islands & Eastern Indonesia",
+                           "IM2" = "Indian Subcontinent",
+                           "IM7" = "Indian Subcontinent",
+                           "IM12" = "SouthEast Asian Forests",
+                           "IM17" = "Malaysia & Western Indonesia",
+                           "IM16" = "Malaysia & Western Indonesia",
+                           "IM18" = "Malaysia & Western Indonesia",
+                           "AT11" = "Sub-equtorial Afrotropics",
+                           "AT13" = "Equatorial Afrotropics",
+                           "AT12" = "Equatorial Afrotropics",
+                           "AT14" = "Equatorial Afrotropics",
+                           "AT7" = "Madagascar & East African Coast",
+                           "AT16" = "Equatorial Afrotropics",
+                           "AT19" = "Equatorial Afrotropics",
+                           "AT21" = "Sub-Saharan Afrotropics",
+                           )) 
+
+# Count how many sites there are per subrealm
+subrealms_clip$count <- lengths(st_intersects(subrealms_clip, entries_sf))
+mapview(subrealms_clip)
+
+
+#check
+st_is_valid(subrealms_clip)
 
 theme_set(theme_bw())
 
 ggplot() +
-  geom_sf(data=bioregions, aes(fill=count))+
+  geom_sf(data=subrealms_clip, aes(fill=count))+
   scale_fill_viridis_c(option = "magma", "") +
-  geom_sf(data=entries_sf, aes(colour="red")) +
-  theme(legend.position = "Number of studies") +
+  geom_sf(data=entries_sf, aes(), colour="grey") +
+  theme(legend.position = "bottom") +
   coord_sf(xlim = c(-130, 160), ylim = c(-30, 30)) 
+
+
+
+
 
 
 # World data countries
 library(maps)
-library(rwordlmap)
+library(rworldmap)
 world <- map_data("world")
 
 world_sf <- st_as_sf(world, coords = c("long", "lat"), 
