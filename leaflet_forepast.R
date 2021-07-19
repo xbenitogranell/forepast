@@ -99,12 +99,18 @@ theme_set(theme_bw())
 #plot
 plt1 <- ggplot() +
   geom_sf(data=subrealms_clip, aes(fill=count))+
+  #geom_sf(data = subrealms_clip
   scale_fill_viridis_c(option = "magma", "") +
   geom_sf(data=entries_sf, aes(), colour="grey", shape=17, size=3) +
-  geom_sf(data=world_sf, aes(), size=0.5) + #plot world map
-  theme(legend.position = "bottom") +
+  geom_sf(data=world_sf, aes(), size=0.3) + #plot world map
+  theme(legend.position = "bottom",
+         legend.title = element_text("Number of studies")) +
   coord_sf(xlim = c(-130, 160), ylim = c(-30, 30)) 
 plt1
 
-
+#save the plot
+ggsave("outputs/counts_subrealms.png",
+       plot = last_plot(),
+       width = 19,
+       height = 8)
 
